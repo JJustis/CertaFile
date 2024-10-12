@@ -202,35 +202,91 @@ $conn->close();
             margin: 40px auto;
             text-align: center;
         }
-        .form-section {
-            background-color: #fff;
-            padding: 40px;
-            margin-bottom: 40px;
-            border-radius: 10px;
-            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
-        }
-        input[type="text"], input[type="file"] {
-            width: 80%;
-            padding: 15px;
-            margin: 15px 0;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-size: 16px;
-        }
-        input[type="submit"] {
-            padding: 15px 30px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: background-color 0.3s;
-        }
-        input[type="submit"]:hover {
-            background-color: #2c3e50;
-        }
+
+    .form-section {
+        background-color: #fff;
+        padding: 40px;
+        margin-bottom: 40px;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+        position: relative;
+    }
+    .form-section h2 {
+        font-size: 28px;
+        color: #3498db;
+        margin-bottom: 20px;
+        text-align: center;
+        position: relative;
+    }
+    .form-input {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        position: relative;
+    }
+    .form-input label {
+        display: flex;
+        align-items: center;
+        font-size: 16px;
+        width: 180px;
+        color: #2c3e50;
+    }
+    .form-input label i {
+        font-size: 24px;
+        margin-right: 10px;
+        color: #3498db;
+    }
+    .form-input input[type="file"], .form-input input[type="text"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: 16px;
+        margin-left: 20px;
+        background-color: #f4f4f9;
+    }
+    .form-input input[type="text"] {
+        display: block;
+    }
+    .form-input input[type="submit"] {
+        width: auto;
+        background-color: #3498db;
+        color: white;
+        padding: 15px 30px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 18px;
+        font-weight: bold;
+        margin-left: 200px;
+        transition: background-color 0.3s;
+    }
+    .form-input input[type="submit"]:hover {
+        background-color: #2c3e50;
+    }
+    .tooltip {
+        position: absolute;
+        top: 50%;
+        right: 0;
+        transform: translateY(-50%);
+        background-color: #3498db;
+        color: white;
+        font-size: 14px;
+        padding: 5px 10px;
+        border-radius: 5px;
+        white-space: nowrap;
+        visibility: hidden;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    .form-input:hover .tooltip {
+        visibility: visible;
+        opacity: 1;
+    }
+    .form-section i {
+        margin-right: 10px;
+    }
+
         #status {
             margin-top: 20px;
         }
@@ -420,16 +476,38 @@ $conn->close();
     </div>
 
     <!-- File Upload Section -->
-    <div class="form-section">
-        <h2>Upload a File for Blockchain Verification</h2>
-        <form enctype="multipart/form-data" method="post">
+
+
+<div class="form-section">
+    <h2><i class="fas fa-upload"></i> Upload a File for Blockchain Verification</h2>
+    <form enctype="multipart/form-data" method="post">
+        <div class="form-input">
+            <label for="file"><i class="fas fa-file-upload"></i> Choose a File</label>
             <input type="file" id="file" name="file" required>
+            <div class="tooltip">Select the file you want to upload for verification.</div>
+        </div>
+
+        <div class="form-input">
+            <label for="file_username"><i class="fas fa-user"></i> Username</label>
             <input type="text" id="file_username" name="file_username" placeholder="Enter username to reward" required>
-            <label for="signature_file">Upload Signature File (for verification):</label>
+            <div class="tooltip">Enter the username to receive rewards for this verification.</div>
+        </div>
+
+        <div class="form-input">
+            <label for="signature_file"><i class="fas fa-signature"></i> Upload Signature</label>
             <input type="file" id="signature_file" name="signature_file">
+            <div class="tooltip">Upload a previously generated .signature file (optional for first-time upload).</div>
+        </div>
+
+        <div class="form-input">
             <input type="submit" value="Upload and Verify">
-        </form>
-    </div>
+        </div>
+    </form>
+</div>
+
+<!-- Include Font Awesome for icons -->
+<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
 </div>
 
 <div id="status"></div>
