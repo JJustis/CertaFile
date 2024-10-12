@@ -202,7 +202,32 @@ $conn->close();
             margin: 40px auto;
             text-align: center;
         }
-
+        .form-section {
+            background-color: #fff;
+            padding: 40px;
+            margin-bottom: 40px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+        }
+        input[type="text"], input[type="file"] {
+            width: 80%;
+            padding: 15px;
+            margin: 15px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        input[type="submit"] {
+            padding: 15px 30px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
     .form-section {
         background-color: #fff;
         padding: 40px;
@@ -286,7 +311,6 @@ $conn->close();
     .form-section i {
         margin-right: 10px;
     }
-
         #status {
             margin-top: 20px;
         }
@@ -476,7 +500,6 @@ $conn->close();
     </div>
 
     <!-- File Upload Section -->
-
 
 <div class="form-section">
     <h2><i class="fas fa-upload"></i> Upload a File for Blockchain Verification</h2>
