@@ -1,5 +1,4 @@
 <?php
-
 session_start();
 
 // MySQL database connection (replace with your own credentials)
@@ -12,12 +11,34 @@ $dbname = "reservesphp";
 $privateKeyFile = "dsa-private.pem";
 $publicKeyFile = "dsa-public.pem";
 
+// Blockchain file
+$blockchainFile = "blockchain.json";
+
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);
 
 // Check connection
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
+}
+
+// Initialize blockchain if it doesn't exist
+if (!file_exists($blockchainFile)) {
+    file_put_contents($blockchainFile, json_encode([])); // Initialize as an empty array
+}
+
+// Function to load blockchain
+function loadBlockchain() {
+    global $blockchainFile;
+    return json_decode(file_get_contents($blockchainFile), true);
+}
+
+// Function to add block to blockchain
+function addBlockToBlockchain($block) {
+    global $blockchainFile;
+    $blockchain = loadBlockchain();
+    $blockchain[] = $block; // Add new block
+    file_put_contents($blockchainFile, json_encode($blockchain, JSON_PRETTY_PRINT)); // Save blockchain
 }
 
 // Handle signup and set session
@@ -63,6 +84,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file']) && isset($_P
             fwrite($signatureFile, "$fileHash\n" . base64_encode($signature) . "\n" . file_get_contents($publicKeyFile));
             fclose($signatureFile);
 
+            // Add block to blockchain
+            $block = [
+                'file' => $fileName,
+                'hash' => $fileHash,
+                'timestamp' => date('Y-m-d H:i:s'),
+                'signed_by' => $fileUsername,
+                'type' => 'File Signed'
+            ];
+            addBlockToBlockchain($block);
+
             // Prompt for digital signature download
             header('Content-Type: application/octet-stream');
             header('Content-Disposition: attachment; filename="' . basename("$fileName.signature") . '"');
@@ -103,6 +134,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file']) && isset($_P
                 $userExpResult = $conn->query("SELECT exp FROM members WHERE username = '$fileUsername'");
                 $userExp = $userExpResult->fetch_assoc()['exp'];
 
+                // Add the file to the blockchain after successful verification
+                $block = [
+                    'file' => $fileName,
+                    'hash' => $newHmac,
+                    'timestamp' => date('Y-m-d H:i:s'),
+                    'verified_by' => $fileUsername,
+                    'type' => 'File Verified'
+                ];
+                addBlockToBlockchain($block);
+
                 echo "File verification successful! $fileUsername has earned 1000 EXP. Total EXP: $userExp";
             } else {
                 echo "File verification failed. The file and signature do not match.";
@@ -117,7 +158,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['file']) && isset($_P
 }
 
 $conn->close();
-
 ?>
 
 
@@ -211,6 +251,26 @@ $conn->close();
         .modal.active {
             display: block;
         }
+        /* Modal Styling */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            z-index: 1000;
+            width: 70%;
+            padding: 30px;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+        .modal h1 {
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
         #overlay {
             display: none;
             position: fixed;
@@ -221,9 +281,123 @@ $conn->close();
             background: rgba(0, 0, 0, 0.5);
             z-index: 999;
         }
+        .close-btn {
+            display: block;
+            margin: 20px auto;
+            background-color: #e74c3c;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .close-btn:hover {
+            background-color: #c0392b;
+        }
+        /* Blockchain Panel Styling */
+        .blockchain-section {
+            margin-top: 40px;
+        }
+        .blockchain-panel {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .blockchain-panel pre {
+            background-color: #f4f4f9;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            overflow-x: auto;
+            max-height: 300px;
+            white-space: pre-wrap;
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+        }
     </style>
 </head>
 <body>
+
+<!-- Button to open the tutorial modal -->
+<button id="openModalBtn">How to Use the Site</button>
+
+<!-- Modal for Tutorial -->
+<div id="overlay"></div>
+<div id="tutorialModal" class="modal">
+    <h1>How to Use Blockchain Digital Signage</h1>
+
+    <div class="section">
+        <h2>Step 1: Sign Up to Create an Account</h2>
+        <p>Before you can upload or verify files, you need to sign up for an account.</p>
+        <div class="steps">
+            <h3>Steps:</h3>
+            <ul>
+                <li><strong>Step 1:</strong> Go to the homepage and find the "Sign Up" section.</li>
+                <li><strong>Step 2:</strong> Enter a unique username in the "Choose a username" field.</li>
+                <li><strong>Step 3:</strong> Click the "Sign Up" button. You will receive confirmation of your account creation.</li>
+            </ul>
+        </div>
+        <p><strong>Result:</strong> Your username will be displayed at the top of the page, and a session will be started. You can now upload and verify files.</p>
+    </div>
+
+    <div class="section">
+        <h2>Step 2: Upload a File for Signing (First-Time Upload)</h2>
+        <p>Once you're signed in, you can upload a file to be signed by the system and generate a signature for that file.</p>
+        <div class="steps">
+            <h3>Steps:</h3>
+            <ul>
+                <li><strong>Step 1:</strong> In the "Upload a File for Blockchain Verification" section, click "Choose File" to select a file.</li>
+                <li><strong>Step 2:</strong> Enter the username to reward in the "Enter username to reward" field.</li>
+                <li><strong>Step 3:</strong> Click the "Upload and Verify" button.</li>
+            </ul>
+        </div>
+        <p><strong>Result:</strong> The system will generate a `.signature` file for your uploaded file, which will automatically download. Store this signature file with your original file.</p>
+        <div class="tip">
+            <strong>Tip:</strong> Always keep the `.signature` file safe. It is required for future file verification.
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Step 3: Verify a File (Second-Time Upload with Signature)</h2>
+        <p>To verify a previously signed file, follow these steps:</p>
+        <div class="steps">
+            <h3>Steps:</h3>
+            <ul>
+                <li><strong>Step 1:</strong> In the "Upload a File for Blockchain Verification" section, click "Choose File" and select the original file you want to verify.</li>
+                <li><strong>Step 2:</strong> Enter the username to reward in the "Enter username to reward" field.</li>
+                <li><strong>Step 3:</strong> Click the "Choose File" button next to "Upload Signature File" to select the `.signature` file you downloaded earlier.</li>
+                <li><strong>Step 4:</strong> Click "Upload and Verify".</li>
+            </ul>
+        </div>
+        <p><strong>Result:</strong> If the file matches the signature, you will receive confirmation, and the specified user will earn 1000 EXP.</p>
+        <div class="tip">
+            <strong>Tip:</strong> You can verify files for other users by entering their username in the "Enter username to reward" field. This allows you to help others while they gain EXP.
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Step 4: Track Your EXP</h2>
+        <p>Each successful file verification rewards you with 1000 EXP, which can be tracked through your user account. Your total EXP is stored in the database and displayed in the leaderboard.</p>
+        <div class="tip">
+            <strong>Tip:</strong> You can verify files for yourself or others. Each successful verification adds 1000 EXP to the rewarded username's account.
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Best Practices</h2>
+        <p>Here are some best practices to ensure you get the most out of the Blockchain Digital Signage system:</p>
+        <ul>
+            <li><strong>Keep Your Signature File Safe:</strong> Always store the `.signature` file with the original file. This ensures that you can verify it in the future.</li>
+            <li><strong>Use a Unique Username:</strong> This is how the system tracks rewards. Always make sure your username is correctly entered to ensure you receive the correct amount of EXP.</li>
+            <li><strong>Help Others:</strong> You can enter another user’s username in the reward field when verifying files. This is a great way to help others gain EXP.</li>
+        </ul>
+    </div>
+
+    <!-- Close button -->
+    <button class="close-btn" id="closeModalBtn">Close</button>
+</div>
 
 <div class="hero">
     <h1>Blockchain Digital Signage</h1>
@@ -269,11 +443,42 @@ $conn->close();
     <button onclick="closeModal()">Close</button>
 </div>
 
+<!-- Blockchain Panel Section -->
+<div class="blockchain-section">
+    <h2>Current Blockchain</h2>
+    <div class="blockchain-panel">
+        <h3>Blockchain Data:</h3>
+        <pre id="blockchainDisplay">Loading blockchain data...</pre>
+    </div>
+</div>
+
 <script>
-function closeModal() {
-    document.getElementById('overlay').classList.remove('active');
-    document.getElementById('certificateModal').classList.remove('active');
-}
+    // Open modal
+    document.getElementById('openModalBtn').addEventListener('click', function() {
+        document.getElementById('overlay').style.display = 'block';
+        document.getElementById('tutorialModal').style.display = 'block';
+    });
+
+    // Close modal
+    document.getElementById('closeModalBtn').addEventListener('click', function() {
+        document.getElementById('overlay').style.display = 'none';
+        document.getElementById('tutorialModal').style.display = 'none';
+    });
+
+    // Load blockchain data from a file using AJAX
+    function loadBlockchainData() {
+        fetch('blockchain.json')  // Replace with your blockchain file path
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('blockchainDisplay').innerText = JSON.stringify(data, null, 2);
+        })
+        .catch(error => {
+            document.getElementById('blockchainDisplay').innerText = 'Error loading blockchain data';
+        });
+    }
+
+    // Call function to load blockchain data when the page loads
+    window.onload = loadBlockchainData;
 </script>
 
 </body>
