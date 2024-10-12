@@ -465,9 +465,11 @@ $conn->close();
         document.getElementById('tutorialModal').style.display = 'none';
     });
 
-    // Load blockchain data from a file using AJAX
+     // Load blockchain data from a file using AJAX with cache-busting
     function loadBlockchainData() {
-        fetch('blockchain.json')  // Replace with your blockchain file path
+        // Append a unique query string to the file path to prevent caching
+        const url = 'blockchain.json?' + new Date().getTime();
+        fetch(url)  // Fetching with a cache-busting query string
         .then(response => response.json())
         .then(data => {
             document.getElementById('blockchainDisplay').innerText = JSON.stringify(data, null, 2);
